@@ -25,7 +25,7 @@ to setup-sources
   repeat number-of-sources [
     ask patch (random 100) (random 100) [
       set source? True
-      set intensity 100
+      set intensity source-intensity
       set pcolor yellow
     ]
   ]
@@ -33,10 +33,11 @@ end
 
 to setup-turtles
   set-default-shape turtles "circle"
-  create-turtles 10 [
+  create-turtles number-of-agents [
     set velocity 1
     set heading (random 360)
     setxy random-xcor random-ycor
+    ifelse draw-paths [pen-down] [pen-up]
   ]
 end
 
@@ -74,6 +75,7 @@ end
 
 to turtles-move
   ask turtles [
+    ifelse draw-paths [pen-down] [pen-up]
     set old-intensity intensity
     forward velocity
   ]
@@ -81,19 +83,18 @@ end
 
 to calculate-velocity
   ask turtles [
-    let temp 0.05 + (2 - 0.05) * exp (- intensity)
+    let temp 0.5 + (2 - 0.5) * exp (- intensity)
     set velocity temp
   ]
 end
 
 to change-angle
   ask turtles [
-    if (intensity <= old-intensity) [
+    if (intensity - old-intensity <= 0.1) [
       set heading random 360
     ]
   ]
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -131,17 +132,17 @@ number-of-sources
 number-of-sources
 0
 5
-1.0
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-87
-116
-150
-149
+23
+170
+86
+203
 NIL
 setup
 NIL
@@ -155,10 +156,10 @@ NIL
 1
 
 BUTTON
-115
-205
-178
-238
+130
+168
+193
+201
 NIL
 go
 T
@@ -170,6 +171,32 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+21
+79
+193
+112
+number-of-agents
+number-of-agents
+1
+10
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+SWITCH
+22
+125
+194
+158
+draw-paths
+draw-paths
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
