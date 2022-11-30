@@ -1,5 +1,5 @@
 globals [source-intensity]
-patches-own [intensity source? wall? intensity-change]
+patches-own [intensity intensity-change source? wall?]
 turtles-own [velocity old-intensity]
 
 to setup
@@ -19,10 +19,10 @@ to setup-patches
     set source? false
     set wall? false
   ]
-  ask patches with [pxcor > 50 and pycor = 50] [
-    set wall? true
-    set pcolor gray
-  ]
+;  ask patches with [(pxcor > 50 and pycor = 50) or (pxcor = 50 and pycor > 52)] [
+;    set wall? true
+;    set pcolor gray
+;  ]
   setup-sources
 end
 
@@ -55,7 +55,6 @@ to go
 end
 
 to simulate-chemical
-  ;diffuse intensity (95.0 / 100)
   diffuse-chemical
   ask patches [
     set intensity (intensity * (100 - 0.1) / 100) ; evaporation
@@ -90,7 +89,9 @@ to diffuse-chemical
 end
 
 to recolor-patch
-  if (not source? and not wall?) [ set pcolor scale-color green intensity 0.1 5 ]
+  if (not source? and not wall?) [
+    set pcolor scale-color green intensity 0.1 5
+  ]
 end
 
 to simulate-turtles
@@ -118,10 +119,15 @@ end
 
 to change-angle
   ask turtles [
-    if (intensity - old-intensity <= 0.1) [
+    if (intensity - old-intensity <= 0.01) [
       set heading random 360
     ]
   ]
+end
+
+to-report distance-to-closest-source
+  let closest-source min-one-of (patches with [source? = true]) [distance myself]
+  report distance closest-source
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -209,7 +215,7 @@ number-of-agents
 number-of-agents
 1
 10
-3.0
+4.0
 1
 1
 NIL
@@ -222,9 +228,27 @@ SWITCH
 158
 draw-paths
 draw-paths
-0
+1
 1
 -1000
+
+PLOT
+789
+131
+1205
+416
+Avg. distance from closest source
+Time
+Avg. dist of bacteria
+0.0
+10.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mean [distance-to-closest-source] of turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
