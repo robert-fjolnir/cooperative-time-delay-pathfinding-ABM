@@ -1,5 +1,5 @@
 globals [source-intensity]
-patches-own [intensity source? wall?]
+patches-own [intensity source? wall? intensity-change]
 turtles-own [velocity old-intensity]
 
 to setup
@@ -15,8 +15,13 @@ end
 to setup-patches
   ask patches [
     set intensity 0
+    set intensity-change 0
     set source? false
     set wall? false
+  ]
+  ask patches with [pxcor > 50 and pycor = 50] [
+    set wall? true
+    set pcolor gray
   ]
   setup-sources
 end
@@ -50,7 +55,8 @@ to go
 end
 
 to simulate-chemical
-  diffuse intensity (95.0 / 100)
+  ;diffuse intensity (95.0 / 100)
+  diffuse-chemical
   ask patches [
     set intensity (intensity * (100 - 0.1) / 100) ; evaporation
     recolor-patch
@@ -60,6 +66,26 @@ to simulate-chemical
   ]
   ask patches with [wall? = True] [
     set intensity 0
+  ]
+end
+
+to diffuse-chemical
+  let percentage (95.0 / 100)
+  ; Calculate changes in intensity
+  ask patches [
+    let num count neighbors with [wall? = false]
+    let part percentage * intensity / 8
+
+    set intensity-change intensity-change - (num * part)
+    ask neighbors with [wall? = false] [
+      set intensity-change intensity-change + part
+    ]
+  ]
+
+  ; Apply those changes
+  ask patches [
+    set intensity intensity + intensity-change
+    set intensity-change 0
   ]
 end
 
@@ -77,7 +103,9 @@ to turtles-move
   ask turtles [
     ifelse draw-paths [pen-down] [pen-up]
     set old-intensity intensity
-    forward velocity
+    if patch-ahead 1 != nobody and [wall?] of patch-ahead 1 = false [
+      forward velocity
+    ]
   ]
 end
 
