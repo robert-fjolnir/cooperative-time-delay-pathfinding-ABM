@@ -87,6 +87,7 @@ end
 
 ;;;;;;;; Go procedures ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 to go
+
   simulate-chemical
   simulate-turtles
   color-patches
@@ -96,7 +97,9 @@ end
 ; ~~~~~~~~~~~~~~ turtle go procedues ~~~~~~~~~~~~~
 
 to simulate-turtles
+
   ask turtles [
+    set old-intensity intensity
     change-angle
     if patch-ahead 1 != nobody and [wall?] of patch-ahead 1 = false
     [move]
@@ -111,7 +114,7 @@ end
 
 ;;; This is my trying to modify the movment equation into a form thats more analogous to the one in the paper
 to move
-  set old-intensity intensity
+
 
   set step-size 1
   sense-communications
@@ -161,7 +164,6 @@ end
 ;
 to change-angle
     if (intensity - old-intensity <= 0.01) [
-
       set heading random 360
     ]
 
