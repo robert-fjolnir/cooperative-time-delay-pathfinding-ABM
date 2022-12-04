@@ -100,7 +100,12 @@ to simulate-turtles
     change-angle
     if patch-ahead 1 != nobody and [wall?] of patch-ahead 1 = false
     [move]
+
+    if (intensity - old-intensity >= threshold-to-communicate )
+      [secrete-pheromone]
   ]
+  diffuse pheromone-attract 1
+
 
 end
 
