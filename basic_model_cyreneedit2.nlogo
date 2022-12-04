@@ -15,6 +15,7 @@ patches-own [
   source?
   wall?
   pheromone-attract
+  pheromone-change
   pheromone-repel
 ]
 turtles-own [
@@ -49,6 +50,7 @@ to setup-patches
     set wall? false
 
     set pheromone-attract 0
+    set pheromone-change 0
     set pheromone-repel 0
     set to-RGB 255 / white
 
@@ -93,6 +95,7 @@ end
 to go
 
   simulate-chemical
+  simulate-pheromone
   simulate-turtles
   color-patches
   tick
@@ -101,7 +104,6 @@ end
 ; ~~~~~~~~~~~~~~ turtle go procedures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 to simulate-turtles
-
   ask turtles [
     set old-intensity intensity
     change-angle
@@ -111,9 +113,6 @@ to simulate-turtles
     if (intensity - old-intensity >= threshold-to-communicate )
       [secrete-pheromone]
   ]
-  diffuse pheromone-attract 1 ; diffuses the pheromone that is released by the bacteria into the enviornment
-
-
 end
 
 ;;; This is my trying to modify the movment equation into a form thats more analogous to the one in the paper
@@ -127,7 +126,7 @@ to move
 
   ; w/o communication component (just according to its own detection of the gradient
   setxy xc yc
-; forward step-size
+  forward step-size
 
 
 
@@ -135,8 +134,8 @@ end
 
 ; calculates the effect of the communications cell to cell on the bacteria's movement
 to sense-communications
-  let pheromone-detected ( pheromone-attract - pheromone-attract-previous)
-  set communication-component 0.1
+  ; let pheromone-detected ( pheromone-attract - pheromone-attract-previous)
+  set communication-component 0
 end
 
 ; calculates the effect of the bacteria's own detection of the source gradient to its movement
@@ -204,6 +203,7 @@ end
 
 ; ~~~~~~~~~~~~~~~ patch go procedures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+; Simulate the physics of the chemicals
 to simulate-chemical
   diffuse-chemical
   ask patches [
@@ -238,11 +238,36 @@ to diffuse-chemical
   ]
 end
 
-;to recolor-patch
-;  if (not source? and not wall?) [
-;    set pcolor scale-color green intensity 0.1 5
-;  ]
-;end
+; Simulate the physics of pheromones
+to simulate-pheromone
+  diffuse-pheromone
+  ask patches [
+    set pheromone-attract (pheromone-attract * (100 - 0.1) / 100) ; evaporation
+  ]
+  ask patches with [wall? = True] [
+    set pheromone-attract 0
+  ]
+end
+
+to diffuse-pheromone
+  let percentage (95.0 / 100)
+  ; Calculate changes in intensity
+  ask patches [
+    let num count neighbors with [wall? = false]
+    let part percentage * pheromone-attract / 8
+
+    set pheromone-change pheromone-change - (num * part)
+    ask neighbors with [wall? = false] [
+      set pheromone-change pheromone-change + part
+    ]
+  ]
+
+  ; Apply those changes
+  ask patches [
+    set pheromone-attract pheromone-attract + pheromone-change
+    set pheromone-change 0
+  ]
+end
 
 
 
