@@ -106,10 +106,10 @@ end
 to simulate-turtles
   ask turtles [
     set old-intensity intensity
-    change-angle
     if patch-ahead 1 != nobody and [wall?] of patch-ahead 1 = false
     [move]
 
+    change-angle
     if (intensity - old-intensity >= threshold-to-communicate )
       [secrete-pheromone]
   ]
@@ -121,15 +121,7 @@ to move
   sense-communications
   detect-source-gradient
 
-;  set xc xc + 0.5 * (something) * dx))
-;  set yc yc + 0.5 * (community-weight * communication-component * dy-previous + (individual-weight * dy))
-
-  ; w/o communication component (just according to its own detection of the gradient
-  setxy xc yc
   forward step-size
-
-
-
 end
 
 ; calculates the effect of the communications cell to cell on the bacteria's movement
@@ -150,13 +142,18 @@ end
 ; a variance that is sensitive to whether the bacteria senses a positive gradient or not
 to change-angle
   let previous-angle heading
-    ifelse (intensity - old-intensity <= 0.01)
-  [ set heading random-normal previous-angle 180 ]
-  [ set heading random-normal previous-angle 0 ]
+
+  let change_in_source intensity - old-intensity
+  let change_in_pheromone 0
 
   ; weighted sum between pheromon and source gradient
-  ; somevar = change_in_source + change_in_pheromone
-  ; set heading random-normal previous-angle ln ( 1 /  const * somevar) ;
+  let sumchange max list 0 (change_in_source + change_in_pheromone)
+  let std 360 * e ^ (-25 * sumchange)
+
+  print sumchange
+  print std
+
+  set heading random-normal previous-angle std
   ; have the angle depend continuously on the sum of the changes in the gradients
 end
 
@@ -167,48 +164,13 @@ to secrete-pheromone
 end
 
 
-
-;to simulate-turtles
-;  ask turtles [
-;    set old-intensity intensity
-;    run-forward ; run
-;    change-angle ; tumble
-;
-;    if (intensity - old-intensity >= threshold-to-communicate )
-;      [secrete-pheromone]
-;  ]
-;  diffuse pheromone-attract 1
-;end
-;
-;to run-forward
-;    if patch-ahead 1 != nobody and [wall?] of patch-ahead 1 = false [
-;      forward velocity
-;  ]
-;end
-;
-;
-
-;to change-angle
-;    if (intensity - old-intensity <= 0.01) [
-;      set heading random 360
-;    ]
-;end
-
-;to calculate-velocity ; This velocity calculation is never used
-;  ask turtles [
-;    let temp 0.5 + (2 - 0.5) * exp (- intensity)
-;    set velocity temp
-;  ]
-;end
-
 ; ~~~~~~~~~~~~~~~ patch go procedures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ; Simulate the physics of the chemicals
 to simulate-chemical
   diffuse-chemical
   ask patches [
-    set intensity (intensity * (100 - 0.1) / 100) ; evaporation
-    ;recolor-patch
+    set intensity (intensity * (100 - 0.01) / 100) ; evaporation
   ]
   ask patches with [source? = True] [
     set intensity source-intensity ; sources
@@ -219,7 +181,7 @@ to simulate-chemical
 end
 
 to diffuse-chemical
-  let percentage (95.0 / 100)
+  let percentage 1
   ; Calculate changes in intensity
   ask patches [
     let num count neighbors with [wall? = false]
@@ -242,7 +204,7 @@ end
 to simulate-pheromone
   diffuse-pheromone
   ask patches [
-    set pheromone-attract (pheromone-attract * (100 - 0.1) / 100) ; evaporation
+    set pheromone-attract (pheromone-attract * (100 - 0.01) / 100) ; evaporation
   ]
   ask patches with [wall? = True] [
     set pheromone-attract 0
@@ -250,7 +212,7 @@ to simulate-pheromone
 end
 
 to diffuse-pheromone
-  let percentage (95.0 / 100)
+  let percentage 1
   ; Calculate changes in intensity
   ask patches [
     let num count neighbors with [wall? = false]
@@ -321,7 +283,7 @@ number-of-sources
 number-of-sources
 0
 5
-5.0
+3.0
 1
 1
 NIL
@@ -370,7 +332,7 @@ number-of-agents
 number-of-agents
 1
 10
-4.0
+1.0
 1
 1
 NIL
@@ -429,7 +391,7 @@ individual-weight
 individual-weight
 0
 1
-0.1
+0.2
 0.1
 1
 NIL
