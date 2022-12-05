@@ -148,10 +148,7 @@ to change-angle
 
   ; weighted sum between pheromon and source gradient
   let sumchange max list 0 (change_in_source + change_in_pheromone)
-  let std 360 * e ^ (-25 * sumchange)
-
-  print sumchange
-  print std
+  let std 360 * e ^ (-1 * chemical-sensitivity-of-agents * sumchange)
 
   set heading random-normal previous-angle std
   ; have the angle depend continuously on the sum of the changes in the gradients
@@ -170,7 +167,7 @@ end
 to simulate-chemical
   diffuse-chemical
   ask patches [
-    set intensity (intensity * (100 - 0.01) / 100) ; evaporation
+    set intensity (intensity * (100 - 0.1) / 100) ; evaporation
   ]
   ask patches with [source? = True] [
     set intensity source-intensity ; sources
@@ -181,7 +178,7 @@ to simulate-chemical
 end
 
 to diffuse-chemical
-  let percentage 1
+  let percentage 0.95
   ; Calculate changes in intensity
   ask patches [
     let num count neighbors with [wall? = false]
@@ -204,7 +201,7 @@ end
 to simulate-pheromone
   diffuse-pheromone
   ask patches [
-    set pheromone-attract (pheromone-attract * (100 - 0.01) / 100) ; evaporation
+    set pheromone-attract (pheromone-attract * (100 - 0.1) / 100) ; evaporation
   ]
   ask patches with [wall? = True] [
     set pheromone-attract 0
@@ -212,7 +209,7 @@ to simulate-pheromone
 end
 
 to diffuse-pheromone
-  let percentage 1
+  let percentage 0.95
   ; Calculate changes in intensity
   ask patches [
     let num count neighbors with [wall? = false]
@@ -403,6 +400,31 @@ TEXTBOX
 192
 300
 Communication Parameters:
+11
+0.0
+1
+
+SLIDER
+29
+472
+203
+505
+chemical-sensitivity-of-agents
+chemical-sensitivity-of-agents
+1
+100
+25.0
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+34
+439
+184
+457
+Chemical sensing parameters
 11
 0.0
 1
