@@ -197,7 +197,7 @@ end
 to detect-pheromone-gradient
   set pheromone-gradient (pheromone-attract - previous-pheromone)
   ;set pheromone-change-perceived ln (pheromone-gradient + 1)
-  set pheromone-change-perceived (( 1 / (pheromone-attract + 1)) * (source-gradient)) ; (C + 1) to avoid a 1/0 error.
+  set pheromone-change-perceived (( 1 / (pheromone-attract + 1)) * (pheromone-gradient)) ; (C + 1) to avoid a 1/0 error.
 end
 
 
