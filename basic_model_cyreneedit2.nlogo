@@ -2,12 +2,14 @@
 
 globals [
   source-intensity
-   max-pheromone-attract
+  max-pheromone-attract
   max-pheromone-repel
   max-chemical
-  to-RGB
-
+  to-RGB ; for representing multiple chemical gradients on a single patch
   step-size
+
+  ;clock
+  ;time-to-source
 ]
 patches-own [
   intensity
@@ -19,13 +21,22 @@ patches-own [
   pheromone-repel
 ]
 turtles-own [
-  xc
-  yc
   velocity
-  old-intensity
-  ;threshold-to-communicate
-  communication-component
-  gradient-detected
+  time-to-source
+  time-in-radius
+
+  ; relating to the bacteria's
+  ; detection of the food source gradient
+  previous-intensity
+  source-gradient
+  source-change-perceived
+
+  ; and detection of the pheromone gradient
+  ; (communication between bacteria cells)
+  previous-pheromone
+  pheromone-gradient
+  pheromone-change-perceived
+
 ]
 
 
@@ -79,11 +90,11 @@ end
 to setup-turtles
   set-default-shape turtles "circle"
   create-turtles number-of-agents [
-    set velocity 1
+    ;set velocity 1
     set heading (random 360)
     setxy random-xcor random-ycor
-    set xc xcor
-    set yc ycor
+    set time-to-source 0
+    set time-in-radius []
     set threshold-to-communicate 0.01
     ifelse draw-paths [pen-down] [pen-up]
   ]
@@ -105,63 +116,104 @@ end
 
 to simulate-turtles
   ask turtles [
-    set old-intensity intensity
+
+    set previous-intensity intensity
+    set previous-pheromone pheromone-attract
+
+
     if patch-ahead 1 != nobody and [wall?] of patch-ahead 1 = false
     [move]
 
+    detect-source-gradient ; bacteria's own detection of the source gradient
+    detect-pheromone-gradient ; attractive pheromone gradient change detected by the bacteria (communication component)
+
+
     change-angle
-    if (intensity - old-intensity >= threshold-to-communicate )
+
+     ; if a positive food source gradient is detected, release an attraction pheromone
+    if (source-change-perceived >= threshold-to-communicate )
       [secrete-pheromone]
+
+
+
+
+    ; if the bacteria reaches the source, record the time, first occurrence
+    if time-to-source = 0  and [source? = True] of patch-here  [
+      set time-to-source ticks ; if the bacteria reaches the source, record the time, first occurance
+    ]
+    ; (because I thought since we only record the time the bacteria takes to get to the source the first time
+    ; we might want a way to quantify how long the bacteria actually stays by the source. netlogo doesn't
+    ; let me change the histogram axises though so we would want to just export the data if we wanted to do a nice hist)
+    ; Record the time the bacteria spends around the source:
+    if [source? = True] of patch-here [
+    let patches-in-radius patches in-radius radius
+    if member? patch-here patches-in-radius [ set time-in-radius lput ticks time-in-radius ]
+     ;print time-in-radius
+    ]
+
   ]
+
 end
 
-;;; This is my trying to modify the movment equation into a form thats more analogous to the one in the paper
+
+; The bacteria's "run":
 to move
   set step-size 1
-  sense-communications
-  detect-source-gradient
-
   forward step-size
 end
 
-; calculates the effect of the communications cell to cell on the bacteria's movement
-to sense-communications
-  ; let pheromone-detected ( pheromone-attract - pheromone-attract-previous)
-  set communication-component 0
-end
 
-; calculates the effect of the bacteria's own detection of the source gradient to its movement
-to detect-source-gradient
-  let gradient intensity - old-intensity
-  set gradient-detected gradient
-end
-
-; I modified the angle change procedure according to the one in the paper
-; Here, the tumbling angle is sampled randomly from a gaussian distribution
-; which is centered at the previous heading angle the bacteria had, and with
-; a variance that is sensitive to whether the bacteria senses a positive gradient or not
+; The bacteria's "tumble":
+; The angle change of the bacteria takes into account 1) the food source gradient it detects
+; 2) the pheromone gradient (from the other bacteria) it detects.
 to change-angle
   let previous-angle heading
 
-  let change_in_source intensity - old-intensity
-  let change_in_pheromone 0
+  ;detect-source-gradient ; bacteria's own detection of the source gradient
+  ;detect-pheromone-gradient ; attractive pheromone gradient change detected by the bacteria (communication component)
 
-  ; weighted sum between pheromon and source gradient
-  let sumchange max list 0 (change_in_source + change_in_pheromone)
+  ; weighted sum between pheromone and source gradient
+  let sumchange max list 0 (source-change-perceived + pheromone-change-perceived) ; want limit to be bigger than 0 because below zero would make the std calculation redundant
   let std 360 * e ^ (-1 * chemical-sensitivity-of-agents * sumchange)
 
   set heading random-normal previous-angle std
   ; have the angle depend continuously on the sum of the changes in the gradients
 end
 
-; secretes the pheromone used to communicate to the other bacteria that it has discovered a positive gradient with
-; respect to the food source
+
+
+; Changes in perception related to changes in physical stimulus can be represented by the Weber-Fechner Law [2],
+;  which states, that the perceived changes in odor concentration are proportional to the log of stimulus
+; increase. Therefore, a proxy for the signal the bacteria extracts from the enviornment is: (1/C)*(change_in_C/t)
+; where here, C is the concentration of the chemical of interest (be it pheromone or food source).
+; Go commands "detect-pheromone-gradient" and "detect-source-gradient" are written using this logic.
+
+to detect-source-gradient
+  set source-gradient (intensity - previous-intensity)
+  ;set source-change-perceived ln (source-gradient + 1)
+  set source-change-perceived ((1 / (intensity + 1) ) * (source-gradient)) ; (C + 1) to avoid a 1/0 error.
+end
+
+to detect-pheromone-gradient
+  set pheromone-gradient (pheromone-attract - previous-pheromone)
+  ;set pheromone-change-perceived ln (pheromone-gradient + 1)
+  set pheromone-change-perceived (( 1 / (pheromone-attract + 1)) * (source-gradient)) ; (C + 1) to avoid a 1/0 error.
+end
+
+
+; secretes the pheromone used to communicate to the other bacteria that it has discovered a positive food source gradient
 to secrete-pheromone
   set pheromone-attract pheromone-attract + 5
 end
 
 
-; ~~~~~~~~~~~~~~~ patch go procedures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+; ~~~~~~~~~~~~~~~ patch go procedures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ; Simulate the physics of the chemicals
 to simulate-chemical
@@ -220,7 +272,6 @@ to diffuse-pheromone
       set pheromone-change pheromone-change + part
     ]
   ]
-
   ; Apply those changes
   ask patches [
     set pheromone-attract pheromone-attract + pheromone-change
@@ -228,8 +279,7 @@ to diffuse-pheromone
   ]
 end
 
-
-
+;~~~~~~~~~~ patch color procedure ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 to color-patches
   ask patches [  ;; we use gray gives us value from 0 to 9.9
     let pcolor-1 to-RGB * SCALE-COLOR GRAY intensity 0 max-chemical
@@ -238,11 +288,30 @@ to color-patches
     set pcolor RGB pcolor-1 pcolor-2 pcolor-3]
 end
 
-
+;;;;;;;;;;;;;;;;;; Reporters ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 to-report distance-to-closest-source
   let closest-source min-one-of (patches with [source? = true]) [distance myself]
   report distance closest-source
 end
+
+
+
+;::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+;;;;;;;;;;;;; Sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+;1) "the paper" = https://www.pnas.org/doi/10.1073/pnas.1816315116
+; 2) Weber–Fechner law: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4207464/
+; https://www.nature.com/articles/ncomms1455.pdf?origin=ppub -> cites textbook
+; -> where you can read textbook for free:
+;https://archive.org/details/PrinciplesOfNeuralScienceFifthKANDEL/page/n501/mode/2up?q=Weber–Fechner+law
+; -> starts on page 451 in text. -> pg 501 in free online source
+; 3) the "run" and "tumble" modes of the bacteria: https://www.cell.com/current-biology/pdf/S0960-9822(02)01424-0.pdf
+;
+;
+; Quantitation of the Sensory Response in Bacterial Chemotaxis: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC432385/pdf/pnas00045-0304.pdf
+;
+;
+;
 @#$#@#$#@
 GRAPHICS-WINDOW
 243
@@ -329,7 +398,7 @@ number-of-agents
 number-of-agents
 1
 10
-1.0
+10.0
 1
 1
 NIL
@@ -362,7 +431,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mean [distance-to-closest-source] of turtles"
+"default" 1.0 0 -14070903 true "" "plot mean [distance-to-closest-source] of turtles"
 
 SLIDER
 25
@@ -428,6 +497,94 @@ Chemical sensing parameters
 11
 0.0
 1
+
+MONITOR
+674
+314
+839
+359
+Avg Time to Source (mean)
+mean [time-to-source] of turtles
+17
+1
+11
+
+MONITOR
+849
+315
+1028
+360
+Avg. Time to Source (median)
+median [time-to-source] of turtles
+17
+1
+11
+
+MONITOR
+679
+379
+810
+424
+Max time to source
+max [time-to-source] of turtles
+17
+1
+11
+
+MONITOR
+824
+380
+951
+425
+Min time to source
+min [time-to-source] of turtles
+17
+1
+11
+
+MONITOR
+964
+380
+1089
+425
+std time to source
+standard-deviation [time-to-source] of turtles
+17
+1
+11
+
+SLIDER
+648
+445
+820
+478
+radius
+radius
+0
+100
+4.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+829
+436
+1159
+657
+TIme spent around food source
+Amount of time spent
+Number of turtles
+0.0
+10.0
+0.0
+10.0
+true
+false
+"set-plot-y-range 0 10\nset-plot-x-range 0 100\nset-histogram-num-bars 50" ""
+PENS
+"default" 1.0 1 -2674135 true "" "histogram [length time-in-radius] of turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
