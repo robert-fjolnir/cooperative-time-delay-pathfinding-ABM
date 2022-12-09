@@ -77,7 +77,7 @@ to setup-patches
     ;]
 
   ask patches [
-    let coin random 25
+    let coin random 1
     set pcolor black
     if (coin = 0) [
       set wall? true
@@ -615,7 +615,7 @@ SWITCH
 392
 communication
 communication
-0
+1
 1
 -1000
 
