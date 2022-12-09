@@ -9,7 +9,6 @@ globals [
   step-size
 
   ;clock
-  ;time-to-source
 ]
 patches-own [
   intensity
@@ -65,14 +64,14 @@ to setup-patches
     set pheromone-repel 0
     set to-RGB 255 / white
 
-    set max-chemical 10
+    set max-chemical 5
     set max-pheromone-attract 10
     set max-pheromone-repel 10
   ]
-;  ask patches with [(pxcor > 50 and pycor = 50) or (pxcor = 50 and pycor > 52)] [
-;    set wall? true
-;    set pcolor gray
-;  ]
+  ;  ask patches with [(pxcor > 50 and pycor = 50) or (pxcor = 50 and pycor > 52)] [
+  ;    set wall? true
+  ;    set pcolor gray
+  ;  ]
   setup-sources
 
 end
@@ -93,7 +92,7 @@ to setup-turtles
     ;set velocity 1
     set heading (random 360)
     setxy random-xcor random-ycor
-    set time-to-source 0
+    set time-to-source 99999
     set time-in-radius []
     set threshold-to-communicate 0.01
     ifelse draw-paths [pen-down] [pen-up]
@@ -130,7 +129,7 @@ to simulate-turtles
 
     change-angle
 
-     ; if a positive food source gradient is detected, release an attraction pheromone
+    ; if a positive food source gradient is detected, release an attraction pheromone
     if (source-change-perceived >= threshold-to-communicate )
       [secrete-pheromone]
 
@@ -138,7 +137,7 @@ to simulate-turtles
 
 
     ; if the bacteria reaches the source, record the time, first occurrence
-    if time-to-source = 0  and [source? = True] of patch-here  [
+    if time-to-source = 99999  and [source? = True] of patch-here  [
       set time-to-source ticks ; if the bacteria reaches the source, record the time, first occurance
     ]
     ; (because I thought since we only record the time the bacteria takes to get to the source the first time
@@ -146,9 +145,9 @@ to simulate-turtles
     ; let me change the histogram axises though so we would want to just export the data if we wanted to do a nice hist)
     ; Record the time the bacteria spends around the source:
     if [source? = True] of patch-here [
-    let patches-in-radius patches in-radius radius
-    if member? patch-here patches-in-radius [ set time-in-radius lput ticks time-in-radius ]
-     ;print time-in-radius
+      let patches-in-radius patches in-radius radius
+      if member? patch-here patches-in-radius [ set time-in-radius lput ticks time-in-radius ]
+      ;print time-in-radius
     ]
 
   ]
@@ -203,7 +202,9 @@ end
 
 ; secretes the pheromone used to communicate to the other bacteria that it has discovered a positive food source gradient
 to secrete-pheromone
-  set pheromone-attract pheromone-attract + 5
+  if communication = true [
+    set pheromone-attract pheromone-attract + 10
+  ]
 end
 
 
@@ -349,7 +350,7 @@ number-of-sources
 number-of-sources
 0
 5
-3.0
+1.0
 1
 1
 NIL
@@ -434,10 +435,10 @@ PENS
 "default" 1.0 0 -14070903 true "" "plot mean [distance-to-closest-source] of turtles"
 
 SLIDER
-25
-316
-230
-349
+23
+269
+228
+302
 threshold-to-communicate
 threshold-to-communicate
 0
@@ -449,10 +450,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-23
-361
-195
-394
+21
+314
+193
+347
 individual-weight
 individual-weight
 0
@@ -464,10 +465,10 @@ NIL
 HORIZONTAL
 
 TEXTBOX
-42
+35
+244
+185
 272
-192
-300
 Communication Parameters:
 11
 0.0
@@ -585,6 +586,17 @@ false
 "set-plot-y-range 0 10\nset-plot-x-range 0 100\nset-histogram-num-bars 50" ""
 PENS
 "default" 1.0 1 -2674135 true "" "histogram [length time-in-radius] of turtles"
+
+SWITCH
+23
+359
+164
+392
+communication
+communication
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
