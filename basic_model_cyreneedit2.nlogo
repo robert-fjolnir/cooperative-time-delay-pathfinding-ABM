@@ -71,33 +71,29 @@ to setup-patches
     set max-pheromone-attract 10
     set max-pheromone-repel 10
   ]
-    ;ask patches with [(pxcor > 50 and pycor = 50) or (pxcor = 50 and pycor > 52)] [
-    ;set wall? true
-     ; set pcolor white
-    ;]
 
   ask patches [
-    let coin random 25
+    let coin random 40
     set pcolor black
     if (coin = 0) [
       set wall? true
       set pcolor white
+      ask neighbors4 [
+        set wall? true
+        set pcolor white
+      ]
     ]
-    ;if (coin = 1) [
-     ;set pcolor white
-    ;]
   ]
   setup-sources
 
 end
 
 to setup-sources
-  repeat number-of-sources [
-    ask patch (random 100) (random 100) [
-      set source? True
-      set intensity source-intensity
-      set pcolor yellow
-    ]
+  ask patch 50 50 [
+    set source? True
+    set wall? false
+    set intensity source-intensity
+    set pcolor yellow
   ]
 end
 
@@ -218,7 +214,7 @@ end
 ; secretes the pheromone used to communicate to the other bacteria that it has discovered a positive food source gradient
 to secrete-pheromone
   if communication = true [
-    set pheromone-attract pheromone-attract + 10
+    set pheromone-attract pheromone-attract + 5
   ]
 end
 
@@ -305,7 +301,7 @@ to color-patches
     set pcolor RGB pcolor-1 pcolor-2 pcolor-3
     if wall? = true [
       set pcolor white
-  ]
+    ]
   ]
 
 end
@@ -362,26 +358,11 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
-SLIDER
-21
-34
-193
-67
-number-of-sources
-number-of-sources
-0
-5
-1.0
-1
-1
-NIL
-HORIZONTAL
-
 BUTTON
-23
-170
-86
-203
+25
+109
+88
+142
 NIL
 setup
 NIL
@@ -395,10 +376,10 @@ NIL
 1
 
 BUTTON
-130
-168
-193
-201
+132
+107
+195
+140
 NIL
 go
 T
@@ -412,28 +393,28 @@ NIL
 1
 
 SLIDER
-21
-79
-193
-112
+23
+18
+195
+51
 number-of-agents
 number-of-agents
-1
 10
-10.0
+100
+50.0
 1
 1
 NIL
 HORIZONTAL
 
 SWITCH
-22
-125
-194
-158
+24
+64
+196
+97
 draw-paths
 draw-paths
-0
+1
 1
 -1000
 
@@ -456,10 +437,10 @@ PENS
 "default" 1.0 0 -14070903 true "" "plot mean [distance-to-closest-source] of turtles"
 
 SLIDER
-23
-269
-228
-302
+25
+208
+203
+241
 threshold-to-communicate
 threshold-to-communicate
 0
@@ -470,26 +451,11 @@ threshold-to-communicate
 NIL
 HORIZONTAL
 
-SLIDER
-21
-314
-193
-347
-individual-weight
-individual-weight
-0
-1
-0.2
-0.1
-1
-NIL
-HORIZONTAL
-
 TEXTBOX
-35
-244
-185
-272
+37
+183
+187
+211
 Communication Parameters:
 11
 0.0
@@ -497,9 +463,9 @@ Communication Parameters:
 
 SLIDER
 29
-472
+347
 203
-505
+380
 chemical-sensitivity-of-agents
 chemical-sensitivity-of-agents
 1
@@ -512,9 +478,9 @@ HORIZONTAL
 
 TEXTBOX
 34
-439
+314
 184
-457
+332
 Chemical sensing parameters
 11
 0.0
@@ -584,7 +550,7 @@ radius
 radius
 0
 100
-81.0
+4.0
 1
 1
 NIL
@@ -609,10 +575,10 @@ PENS
 "default" 1.0 1 -2674135 true "" "histogram [length time-in-radius] of turtles"
 
 SWITCH
-23
-359
-164
-392
+26
+253
+203
+286
 communication
 communication
 0
