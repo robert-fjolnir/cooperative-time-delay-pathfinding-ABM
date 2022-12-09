@@ -7,8 +7,7 @@ globals [
   max-chemical
   to-RGB ; for representing multiple chemical gradients on a single patch
   step-size
-
-  ;clock
+  threshold-to-communicate
 ]
 patches-own [
   intensity
@@ -50,7 +49,6 @@ to setup
   setup-turtles
   color-patches
   reset-ticks
-
 end
 
 
@@ -72,15 +70,17 @@ to setup-patches
     set max-pheromone-repel 10
   ]
 
-  ask patches [
-    let coin random 40
-    set pcolor black
-    if (coin = 0) [
-      set wall? true
-      set pcolor white
-      ask neighbors4 [
+  if obstacles = true [
+    ask patches [
+      let coin random 40
+      set pcolor black
+      if (coin = 0) [
         set wall? true
         set pcolor white
+        ask neighbors4 [
+          set wall? true
+          set pcolor white
+        ]
       ]
     ]
   ]
@@ -100,7 +100,6 @@ end
 to setup-turtles
   set-default-shape turtles "circle"
   create-turtles number-of-agents [
-    ;set velocity 1
     set heading (random 360)
     setxy random-xcor random-ycor
     set time-to-source 99999
@@ -114,6 +113,7 @@ end
 ;;;;;;;; Go procedures ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 to go
+  if ticks > 10000 [stop]
 
   simulate-chemical
   simulate-pheromone
@@ -131,8 +131,7 @@ to simulate-turtles
     set previous-pheromone pheromone-attract
 
 
-    if patch-ahead 1 != nobody and [wall?] of patch-ahead 1 = false
-    [move]
+    if patch-ahead 1 != nobody and [wall?] of patch-ahead 1 = false [move]
 
     detect-source-gradient ; bacteria's own detection of the source gradient
     detect-pheromone-gradient ; attractive pheromone gradient change detected by the bacteria (communication component)
@@ -158,7 +157,6 @@ to simulate-turtles
     if [source? = True] of patch-here [
       let patches-in-radius patches in-radius radius
       if member? patch-here patches-in-radius [ set time-in-radius lput ticks time-in-radius ]
-      ;print time-in-radius
     ]
 
   ]
@@ -217,8 +215,6 @@ to secrete-pheromone
     set pheromone-attract pheromone-attract + 5
   ]
 end
-
-
 
 
 
@@ -360,9 +356,9 @@ ticks
 
 BUTTON
 25
-109
+108
 88
-142
+141
 NIL
 setup
 NIL
@@ -436,26 +432,11 @@ false
 PENS
 "default" 1.0 0 -14070903 true "" "plot mean [distance-to-closest-source] of turtles"
 
-SLIDER
-25
-208
-203
-241
-threshold-to-communicate
-threshold-to-communicate
-0
-0.5
-0.01
-0.001
-1
-NIL
-HORIZONTAL
-
 TEXTBOX
 37
-183
+249
 187
-211
+277
 Communication Parameters:
 11
 0.0
@@ -575,13 +556,24 @@ PENS
 "default" 1.0 1 -2674135 true "" "histogram [length time-in-radius] of turtles"
 
 SWITCH
-26
-253
-203
-286
+27
+270
+204
+303
 communication
 communication
-0
+1
+1
+-1000
+
+SWITCH
+27
+199
+205
+232
+obstacles
+obstacles
+1
 1
 -1000
 
