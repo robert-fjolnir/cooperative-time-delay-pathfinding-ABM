@@ -473,7 +473,7 @@ MONITOR
 839
 359
 Avg Time to Source (mean)
-mean [time-to-source] of turtles
+mean [time-to-source] of turtles with [time-to-source != 99999]
 17
 1
 11
@@ -484,7 +484,7 @@ MONITOR
 1028
 360
 Avg. Time to Source (median)
-median [time-to-source] of turtles
+median [time-to-source] of turtles with [time-to-source != 99999]
 17
 1
 11
@@ -495,7 +495,7 @@ MONITOR
 810
 424
 Max time to source
-max [time-to-source] of turtles
+max [time-to-source] of turtles with [time-to-source != 99999]
 17
 1
 11
@@ -506,7 +506,7 @@ MONITOR
 951
 425
 Min time to source
-min [time-to-source] of turtles
+min [time-to-source] of turtles with [time-to-source != 99999]
 17
 1
 11
@@ -517,7 +517,7 @@ MONITOR
 1089
 425
 std time to source
-standard-deviation [time-to-source] of turtles
+standard-deviation [time-to-source] of turtles with [time-to-source != 99999]
 17
 1
 11
