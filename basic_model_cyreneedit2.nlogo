@@ -1,4 +1,4 @@
-; "the paper" = https://www.pnas.org/doi/10.1073/pnas.1816315116
+
 
 globals [
   source-intensity
@@ -148,19 +148,15 @@ to simulate-turtles
 
     ; if the bacteria reaches the source, record the time, first occurrence
     if time-to-source = 99999  and [source? = True] of patch-here  [
-      set time-to-source ticks ; if the bacteria reaches the source, record the time, first occurance
+      set time-to-source ticks 
     ]
-    ; (because I thought since we only record the time the bacteria takes to get to the source the first time
-    ; we might want a way to quantify how long the bacteria actually stays by the source. netlogo doesn't
-    ; let me change the histogram axises though so we would want to just export the data if we wanted to do a nice hist)
-    ; Record the time the bacteria spends around the source:
+    ; Since we only record the time the bacteria takes to get to the source the first time, I thought
+    ; we might want a way to quantify how long the bacteria actually stays by the source. 
     if [source? = True] of patch-here [
       let patches-in-radius patches in-radius radius
       if member? patch-here patches-in-radius [ set time-in-radius lput ticks time-in-radius ]
     ]
-
   ]
-
 end
 
 
@@ -176,9 +172,6 @@ end
 ; 2) the pheromone gradient (from the other bacteria) it detects.
 to change-angle
   let previous-angle heading
-
-  ;detect-source-gradient ; bacteria's own detection of the source gradient
-  ;detect-pheromone-gradient ; attractive pheromone gradient change detected by the bacteria (communication component)
 
   ; weighted sum between pheromone and source gradient
   let sumchange max list 0 (source-change-perceived + pheromone-change-perceived) ; want limit to be bigger than 0 because below zero would make the std calculation redundant
@@ -198,16 +191,13 @@ end
 
 to detect-source-gradient
   set source-gradient (intensity - previous-intensity)
-  ;set source-change-perceived ln (source-gradient + 1)
   set source-change-perceived ((1 / (intensity + 1) ) * (source-gradient)) ; (C + 1) to avoid a 1/0 error.
 end
 
 to detect-pheromone-gradient
   set pheromone-gradient (pheromone-attract - previous-pheromone)
-  ;set pheromone-change-perceived ln (pheromone-gradient + 1)
   set pheromone-change-perceived (( 1 / (pheromone-attract + 1)) * (pheromone-gradient)) ; (C + 1) to avoid a 1/0 error.
 end
-
 
 ; secretes the pheromone used to communicate to the other bacteria that it has discovered a positive food source gradient
 to secrete-pheromone
@@ -215,10 +205,6 @@ to secrete-pheromone
     set pheromone-attract pheromone-attract + 5
   ]
 end
-
-
-
-
 
 
 ; ~~~~~~~~~~~~~~~ patch go procedures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -320,12 +306,8 @@ end
 ;https://archive.org/details/PrinciplesOfNeuralScienceFifthKANDEL/page/n501/mode/2up?q=Weber–Fechner+law
 ; -> starts on page 451 in text. -> pg 501 in free online source
 ; 3) the "run" and "tumble" modes of the bacteria: https://www.cell.com/current-biology/pdf/S0960-9822(02)01424-0.pdf
-;
-;
 ; Quantitation of the Sensory Response in Bacterial Chemotaxis: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC432385/pdf/pnas00045-0304.pdf
-;
-;
-;
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 243
